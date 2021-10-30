@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://MainScene.gd" type="Script" id=1]
 [ext_resource path="res://Board.gd" type="Script" id=2]
@@ -8,6 +8,9 @@
 [ext_resource path="res://images/dice_6.png" type="Texture" id=6]
 [ext_resource path="res://images/dice_4.png" type="Texture" id=7]
 [ext_resource path="res://images/dice_5.png" type="Texture" id=8]
+[ext_resource path="res://images/sensya.png" type="Texture" id=9]
+[ext_resource path="res://images/war_senakn_noman.png" type="Texture" id=10]
+[ext_resource path="res://images/sentouki.png" type="Texture" id=11]
 
 [sub_resource type="TileSet" id=1]
 0/name = "dice_1.png 0"
@@ -112,3 +115,15 @@ __meta__ = {
 [node name="DiceTileMap" type="TileMap" parent="Board"]
 tile_set = SubResource( 1 )
 format = 1
+
+[node name="Sprite1" type="Sprite" parent="Board"]
+position = Vector2( 160, 64 )
+texture = ExtResource( 9 )
+
+[node name="Sprite2" type="Sprite" parent="Board"]
+position = Vector2( 160, 192 )
+texture = ExtResource( 10 )
+
+[node name="Sprite3" type="Sprite" parent="Board"]
+position = Vector2( 160, 320 )
+texture = ExtResource( 11 )
