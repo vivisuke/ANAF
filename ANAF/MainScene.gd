@@ -221,6 +221,7 @@ func input_hai_human():
 					else:
 						$NEpiLabel.text = "Draw"
 						nDraw += 1
+					nEpisode += 1
 					update_stats_label()
 					mode = MODE_INIT
 				else:
@@ -314,7 +315,7 @@ func sel_move_heuristic(slf, opo):
 	else:
 		return y
 func update_stats_label():
-	$StatsLabel.text = "%d-%d-%d" % [nLeftWon, nDraw, nRightWon]
+	$StatsLabel.text = "%d-%d-%d / %d" % [nLeftWon, nDraw, nRightWon, nEpisode]
 func process_rand_rand():
 	$NEpiLabel.text = "#%d" % (nEpisode+1)
 	clear_dice()
@@ -419,6 +420,7 @@ func process_hum_rand_or_hai():
 				else:
 					$NEpiLabel.text = "Draw"
 					nDraw += 1
+				nEpisode += 1
 				update_stats_label()
 				mode = MODE_INIT
 			else:
@@ -465,13 +467,14 @@ func _process(delta):
 	#elif mode == MODE_HUAI_HUM:
 	#	process_hai_hum()
 	pass
-
-func _on_RxRx100_Button_pressed():		# ランダム vs ランダム x 100
+func clear_stats():
 	nEpisode = 0
-	nEpisodeRest = 100
 	nLeftWon = 0
 	nRightWon = 0
 	nDraw = 0
+func _on_RxRx100_Button_pressed():		# ランダム vs ランダム x 100
+	nEpisodeRest = 100
+	clear_stats()
 	mode = MODE_RAND_RAND
 	last_mode = MODE_RAND_RAND
 	clear_dice()
@@ -480,11 +483,8 @@ func _on_RxRx100_Button_pressed():		# ランダム vs ランダム x 100
 
 
 func _on_RxRx1000_Button_pressed():		# ランダム vs ランダム x 1000
-	nEpisode = 0
 	nEpisodeRest = 1000
-	nLeftWon = 0
-	nRightWon = 0
-	nDraw = 0
+	clear_stats()
 	mode = MODE_RAND_RAND
 	last_mode = MODE_RAND_RAND
 	clear_dice()
@@ -494,9 +494,7 @@ func _on_RxRx1000_Button_pressed():		# ランダム vs ランダム x 1000
 func _on_HumxR_Button_pressed():		# 人間 vs ランダム
 	if mode == MODE_HUMAN_RAND: return
 	if last_mode != MODE_HUMAN_RAND:
-		nLeftWon = 0
-		nDraw = 0
-		nRightWon = 0
+		clear_stats()
 		update_stats_label()
 	mode = MODE_HUMAN_RAND
 	last_mode = MODE_HUMAN_RAND
@@ -511,9 +509,7 @@ func _on_HumxR_Button_pressed():		# 人間 vs ランダム
 func _on_HumxHuAI_Button_pressed():		# 人間 vs ヒューリスティックAI
 	if mode == MODE_HUMAN_HAI: return
 	if last_mode != MODE_HUMAN_HAI:
-		nLeftWon = 0
-		nDraw = 0
-		nRightWon = 0
+		clear_stats()
 		update_stats_label()
 	mode = MODE_HUMAN_HAI
 	last_mode = MODE_HUMAN_HAI
@@ -528,9 +524,7 @@ func _on_HumxHuAI_Button_pressed():		# 人間 vs ヒューリスティックAI
 func _on_HuAIxHum_Button_pressed():		# ヒューリスティックAI vs 人間
 	if mode == MODE_HAI_HUMAN: return
 	if last_mode != MODE_HAI_HUMAN:
-		nLeftWon = 0
-		nDraw = 0
-		nRightWon = 0
+		clear_stats()
 		update_stats_label()
 	mode = MODE_HAI_HUMAN
 	last_mode = MODE_HAI_HUMAN
