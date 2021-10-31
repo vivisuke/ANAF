@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=18 format=2]
 
 [ext_resource path="res://MainScene.gd" type="Script" id=1]
 [ext_resource path="res://Board.gd" type="Script" id=2]
@@ -13,6 +13,7 @@
 [ext_resource path="res://images/sentouki.png" type="Texture" id=11]
 [ext_resource path="res://images/dst_green.png" type="Texture" id=12]
 [ext_resource path="res://images/rect_gray.png" type="Texture" id=13]
+[ext_resource path="res://fonts/arialbd.ttf" type="DynamicFontData" id=14]
 
 [sub_resource type="TileSet" id=1]
 0/name = "dice_1.png 0"
@@ -100,9 +101,9 @@
 5/shapes = [  ]
 5/z_index = 0
 
-[sub_resource type="TileSet" id=2]
-0/name = "dst_green.png 0"
-0/texture = ExtResource( 12 )
+[sub_resource type="TileSet" id=4]
+0/name = "rect_gray.png 0"
+0/texture = ExtResource( 13 )
 0/tex_offset = Vector2( 0, 0 )
 0/modulate = Color( 1, 1, 1, 1 )
 0/region = Rect2( 0, 0, 64, 64 )
@@ -115,8 +116,8 @@
 0/shape_one_way_margin = 0.0
 0/shapes = [  ]
 0/z_index = 0
-1/name = "rect_gray.png 1"
-1/texture = ExtResource( 13 )
+1/name = "dst_green.png 1"
+1/texture = ExtResource( 12 )
 1/tex_offset = Vector2( 0, 0 )
 1/modulate = Color( 1, 1, 1, 1 )
 1/region = Rect2( 0, 0, 64, 64 )
@@ -129,6 +130,10 @@
 1/shape_one_way_margin = 0.0
 1/shapes = [  ]
 1/z_index = 0
+
+[sub_resource type="DynamicFont" id=3]
+size = 20
+font_data = ExtResource( 14 )
 
 [node name="MainScene" type="Node2D"]
 script = ExtResource( 1 )
@@ -149,7 +154,7 @@ tile_set = SubResource( 1 )
 format = 1
 
 [node name="CurTileMap" type="TileMap" parent="Board"]
-tile_set = SubResource( 2 )
+tile_set = SubResource( 4 )
 format = 1
 
 [node name="Sprite1" type="Sprite" parent="Board"]
@@ -163,3 +168,16 @@ texture = ExtResource( 10 )
 [node name="Sprite3" type="Sprite" parent="Board"]
 position = Vector2( 160, 320 )
 texture = ExtResource( 11 )
+
+[node name="RxRx100_Button" type="Button" parent="."]
+margin_left = 550.603
+margin_top = 19.0273
+margin_right = 755.603
+margin_bottom = 49.0273
+custom_fonts/font = SubResource( 3 )
+text = "RAND vs RAND *100"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[connection signal="pressed" from="RxRx100_Button" to="." method="_on_RxRx100_Button_pressed"]
