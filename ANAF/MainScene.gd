@@ -304,3 +304,15 @@ func _on_RxRx100_Button_pressed():
 	clear_dice()
 	left_turn = true
 	pass
+
+
+func _on_RxRx1000_Button_pressed():
+	nEpisode = 0
+	nEpisodeRest = 1000
+	nLeftWon = 0
+	nRightWon = 0
+	nDraw = 0
+	mode = MODE_RAND_RAND
+	clear_dice()
+	left_turn = true
+	pass

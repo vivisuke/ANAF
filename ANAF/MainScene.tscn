@@ -185,9 +185,9 @@ position = Vector2( 160, 320 )
 texture = ExtResource( 11 )
 
 [node name="RxRx100_Button" type="Button" parent="."]
-margin_left = 550.603
+margin_left = 493.521
 margin_top = 19.0273
-margin_right = 755.603
+margin_right = 698.521
 margin_bottom = 49.0273
 custom_fonts/font = SubResource( 3 )
 text = "RAND vs RAND *100"
@@ -195,4 +195,16 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="RxRx1000_Button" type="Button" parent="."]
+margin_left = 756.336
+margin_top = 19.0273
+margin_right = 972.336
+margin_bottom = 49.0273
+custom_fonts/font = SubResource( 3 )
+text = "RAND vs RAND *1000"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [connection signal="pressed" from="RxRx100_Button" to="." method="_on_RxRx100_Button_pressed"]
+[connection signal="pressed" from="RxRx1000_Button" to="." method="_on_RxRx1000_Button_pressed"]
