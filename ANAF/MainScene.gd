@@ -12,8 +12,8 @@ const RIGHT_DICE_X = 5
 const DICE_Y = 0
 enum {
 	MODE_INIT = 0,
-	MODE_HUM_RAND,		# 先手（左側）：人間、後手：ランダム
-	MODE_HUM_HUAI,		# 先手（左側）：人間、後手：ヒューリスティックAI
+	MODE_HUMAN_RAND,		# 先手（左側）：人間、後手：ランダム
+	MODE_HUMAN_HAI,		# 先手（左側）：人間、後手：ヒューリスティックAI
 	#MODE_HUAI_HUM,		# 先手（左側）：ヒューリスティックAI、後手：人間
 	MODE_HAI_HUMAN,		# 先手（左側）：ヒューリスティックAI、後手：人間
 	MODE_RAND_RAND,
@@ -21,6 +21,7 @@ enum {
 }
 
 var mode = MODE_INIT
+var last_mode = -1
 var nEpisode = 0
 var nEpisodeRest = 0
 var nLeftWon = 0
@@ -211,9 +212,16 @@ func input_hai_human():
 				left_turn = !left_turn
 				if is_game_over():
 					var rslt = judge_won_lose()
-					if rslt > 0: $NEpiLabel.text = "Left won"
-					elif rslt < 0: $NEpiLabel.text = "Right won"
-					else: $NEpiLabel.text = "Draw"
+					if rslt > 0:
+						$NEpiLabel.text = "Left won"
+						nLeftWon += 1
+					elif rslt < 0:
+						$NEpiLabel.text = "Right won"
+						nRightWon += 1
+					else:
+						$NEpiLabel.text = "Draw"
+						nDraw += 1
+					update_stats_label()
 					mode = MODE_INIT
 				else:
 					$NEpiLabel.text = ""
@@ -279,7 +287,7 @@ func _input(event):
 	if event is InputEventMouseButton && event.is_pressed():
 		if mode == MODE_HAI_HUMAN:
 			input_hai_human()
-		elif mode == MODE_HUM_RAND || mode == MODE_HUM_HUAI:
+		elif mode == MODE_HUMAN_RAND || mode == MODE_HUMAN_HAI:
 			input_human_rand_or_hai()
 		#elif mode == MODE_HUAI_HUM:
 		#	input_hai_human()
@@ -305,6 +313,8 @@ func sel_move_heuristic(slf, opo):
 		return y + 1
 	else:
 		return y
+func update_stats_label():
+	$StatsLabel.text = "%d-%d-%d" % [nLeftWon, nDraw, nRightWon]
 func process_rand_rand():
 	$NEpiLabel.text = "#%d" % (nEpisode+1)
 	clear_dice()
@@ -319,7 +329,7 @@ func process_rand_rand():
 			if nLTgtRT > nLTltRT: nLeftWon += 1
 			elif nLTgtRT < nLTltRT: nRightWon += 1
 			else: nDraw += 1
-			$StatsLabel.text = "%d-%d-%d" % [nLeftWon, nDraw, nRightWon]
+			update_stats_label()
 			left_turn = true		# 常に左側が先手とする
 			if nEpisodeRest == 0:
 				print("nLeftWon = ", nLeftWon)
@@ -387,7 +397,7 @@ func process_hum_rand_or_hai():
 		wcnt -= 1
 		if wcnt > 0: return
 		var y
-		if mode == MODE_HUM_RAND:
+		if mode == MODE_HUMAN_RAND:
 			y = sel_move_randomly(RIGHT_X)
 		else:
 			y = sel_move_heuristic(RIGHT_X, LEFT_X)
@@ -400,9 +410,16 @@ func process_hum_rand_or_hai():
 			
 			if is_game_over():
 				var rslt = judge_won_lose()
-				if rslt > 0: $NEpiLabel.text = "Left won"
-				elif rslt < 0: $NEpiLabel.text = "Right won"
-				else: $NEpiLabel.text = "Draw"
+				if rslt > 0:
+					$NEpiLabel.text = "Left won"
+					nLeftWon += 1
+				elif rslt < 0:
+					$NEpiLabel.text = "Right won"
+					nRightWon += 1
+				else:
+					$NEpiLabel.text = "Draw"
+					nDraw += 1
+				update_stats_label()
 				mode = MODE_INIT
 			else:
 				$NEpiLabel.text = "Click to Roll dice"
@@ -417,7 +434,7 @@ func process_hai_hum():
 		if wcnt > 0: return
 		var y = sel_move_heuristic(LEFT_X, RIGHT_X)
 		#var y
-		#if mode == MODE_HUM_RAND:
+		#if mode == MODE_HUMAN_RAND:
 		#	y = sel_move_randomly(LEFT_X)
 		#else:
 		#	y = sel_move_heuristic(LEFT_X, RIGHT_X)
@@ -443,38 +460,46 @@ func _process(delta):
 		process_hai_rand()
 	elif mode == MODE_HAI_HUMAN:
 		process_hai_human()
-	elif mode == MODE_HUM_RAND || mode == MODE_HUM_HUAI:
+	elif mode == MODE_HUMAN_RAND || mode == MODE_HUMAN_HAI:
 		process_hum_rand_or_hai()
 	#elif mode == MODE_HUAI_HUM:
 	#	process_hai_hum()
 	pass
 
-func _on_RxRx100_Button_pressed():
+func _on_RxRx100_Button_pressed():		# ランダム vs ランダム x 100
 	nEpisode = 0
 	nEpisodeRest = 100
 	nLeftWon = 0
 	nRightWon = 0
 	nDraw = 0
 	mode = MODE_RAND_RAND
+	last_mode = MODE_RAND_RAND
 	clear_dice()
 	left_turn = true
 	pass
 
 
-func _on_RxRx1000_Button_pressed():
+func _on_RxRx1000_Button_pressed():		# ランダム vs ランダム x 1000
 	nEpisode = 0
 	nEpisodeRest = 1000
 	nLeftWon = 0
 	nRightWon = 0
 	nDraw = 0
 	mode = MODE_RAND_RAND
+	last_mode = MODE_RAND_RAND
 	clear_dice()
 	left_turn = true
 	pass
 
-func _on_HumxR_Button_pressed():
-	if mode == MODE_HUM_RAND: return
-	mode = MODE_HUM_RAND
+func _on_HumxR_Button_pressed():		# 人間 vs ランダム
+	if mode == MODE_HUMAN_RAND: return
+	if last_mode != MODE_HUMAN_RAND:
+		nLeftWon = 0
+		nDraw = 0
+		nRightWon = 0
+		update_stats_label()
+	mode = MODE_HUMAN_RAND
+	last_mode = MODE_HUMAN_RAND
 	dice = 0
 	clear_dice()
 	update_cursor()
@@ -483,9 +508,15 @@ func _on_HumxR_Button_pressed():
 	pass
 
 
-func _on_HumxHuAI_Button_pressed():
-	if mode == MODE_HUM_HUAI: return
-	mode = MODE_HUM_HUAI
+func _on_HumxHuAI_Button_pressed():		# 人間 vs ヒューリスティックAI
+	if mode == MODE_HUMAN_HAI: return
+	if last_mode != MODE_HUMAN_HAI:
+		nLeftWon = 0
+		nDraw = 0
+		nRightWon = 0
+		update_stats_label()
+	mode = MODE_HUMAN_HAI
+	last_mode = MODE_HUMAN_HAI
 	dice = 0
 	clear_dice()
 	update_cursor()
@@ -494,9 +525,15 @@ func _on_HumxHuAI_Button_pressed():
 	pass # Replace with function body.
 
 
-func _on_HuAIxHum_Button_pressed():
+func _on_HuAIxHum_Button_pressed():		# ヒューリスティックAI vs 人間
 	if mode == MODE_HAI_HUMAN: return
+	if last_mode != MODE_HAI_HUMAN:
+		nLeftWon = 0
+		nDraw = 0
+		nRightWon = 0
+		update_stats_label()
 	mode = MODE_HAI_HUMAN
+	last_mode = MODE_HAI_HUMAN
 	dice = 0
 	clear_dice()
 	update_cursor()
