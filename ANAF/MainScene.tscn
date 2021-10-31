@@ -195,6 +195,17 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="HumxR_Button" type="Button" parent="."]
+margin_left = 494.0
+margin_top = 76.0
+margin_right = 699.0
+margin_bottom = 106.0
+custom_fonts/font = SubResource( 3 )
+text = "Hum vs RAND"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="RxRx1000_Button" type="Button" parent="."]
 margin_left = 756.336
 margin_top = 19.0273
@@ -207,4 +218,5 @@ __meta__ = {
 }
 
 [connection signal="pressed" from="RxRx100_Button" to="." method="_on_RxRx100_Button_pressed"]
+[connection signal="pressed" from="HumxR_Button" to="." method="_on_HumxR_Button_pressed"]
 [connection signal="pressed" from="RxRx1000_Button" to="." method="_on_RxRx1000_Button_pressed"]
