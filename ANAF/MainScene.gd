@@ -13,6 +13,8 @@ const DICE_Y = 0
 enum {
 	MODE_INIT = 0,
 	MODE_HUM_RAND,		# 先手（左側）：人間、後手：ランダム
+	MODE_HUM_HUAI,		# 先手（左側）：人間、後手：ヒューリスティックAI
+	#MODE_HUAI_HUM,		# 先手（左側）：ヒューリスティックAI、後手：人間
 	MODE_HAI_HUMAN,		# 先手（左側）：ヒューリスティックAI、後手：人間
 	MODE_RAND_RAND,
 	MODE_HAI_RAND,		# 先手（左側）：ヒューリスティックAI、後手：ランダム
@@ -28,6 +30,7 @@ var nLTgtRT = 0
 var nLTltRT = 0
 var left_turn = true		# 左側の手番
 var dice = 0
+var wcnt = 0				# ウェイト用カウンタ
 var labels = []				# 大小比較結果ラベル
 var CmpLabel = load("res://CmpLabel.tscn")
 var rng = RandomNumberGenerator.new()
@@ -189,66 +192,97 @@ func expected_value(slf, opo) -> float:	# サイコロ２つまでの、slf か�
 			if d0d1 < d2d3: return 1.0
 			return 0.0
 	return 999.0
+func input_hai_human():
+	if get_dice(RIGHT_X, 0) != 0 && get_dice(RIGHT_X, 2) != 0 && get_dice(RIGHT_X, 4) != 0:
+		mode = MODE_INIT
+		return
+	if !left_turn:
+		if !dice:
+			dice = rng.randi_range(1, 6)
+			set_dice(RIGHT_DICE_X, DICE_Y, dice)
+			set_dst_cursor(RIGHT_X)
+		else:
+			var mp = $Board/CurTileMap.world_to_map($Board/CurTileMap.get_local_mouse_position())
+			if $Board/CurTileMap.get_cellv(mp) == TILE_DST:
+				set_dice(RIGHT_DICE_X, DICE_Y, TILE_NONE)
+				set_dice(mp.x, mp.y, dice)
+				dice = 0
+				update_cursor()
+				left_turn = !left_turn
+				if is_game_over():
+					var rslt = judge_won_lose()
+					if rslt > 0: $NEpiLabel.text = "Left won"
+					elif rslt < 0: $NEpiLabel.text = "Right won"
+					else: $NEpiLabel.text = "Draw"
+					mode = MODE_INIT
+				else:
+					$NEpiLabel.text = ""
+	#print("")
+	#for i in range(3):
+	#	var y = i * 2
+	#	var left = [get_dice(LEFT_X, y), get_dice(LEFT_X, y+1)]
+	#	var right = [get_dice(RIGHT_X, y), get_dice(RIGHT_X, y+1)]
+	#	print("exp val = ", expected_value(right, left))
+func input_human_rand_or_hai():
+	$NEpiLabel.text = ""
+	if left_turn:
+		if get_dice(RIGHT_X, 0) != 0 && get_dice(RIGHT_X, 2) != 0 && get_dice(RIGHT_X, 4) != 0:
+			#mode = MODE_INIT
+			dice = 0
+			clear_dice()
+			left_turn = true
+			return
+		if !dice:
+			dice = rng.randi_range(1, 6)
+			set_dice(LEFT_DICE_X, DICE_Y, dice)
+			set_dst_cursor(LEFT_X)
+			$NEpiLabel.text = "Click dst pos"
+		else:
+			var mp = $Board/CurTileMap.world_to_map($Board/CurTileMap.get_local_mouse_position())
+			if $Board/CurTileMap.get_cellv(mp) == TILE_DST:
+				set_dice(LEFT_DICE_X, DICE_Y, TILE_NONE)
+				set_dice(mp.x, mp.y, dice)
+				dice = 0
+				update_cursor()
+				left_turn = !left_turn
+				$NEpiLabel.text = ""
+#func input_hai_human():
+#	if !left_turn:
+#		if get_dice(LEFT_X, 0) != 0 && get_dice(LEFT_X, 2) != 0 && get_dice(LEFT_X, 4) != 0:
+#			#mode = MODE_INIT
+#			dice = 0
+#			clear_dice()
+#			left_turn = true
+#			return
+#		if !dice:
+#			dice = rng.randi_range(1, 6)
+#			set_dice(RIGHT_DICE_X, DICE_Y, dice)
+#			set_dst_cursor(RIGHT_X)
+#			$NEpiLabel.text = "Click dst pos"
+#		else:
+#			var mp = $Board/CurTileMap.world_to_map($Board/CurTileMap.get_local_mouse_position())
+#			if $Board/CurTileMap.get_cellv(mp) == TILE_DST:
+#				set_dice(RIGHT_DICE_X, DICE_Y, TILE_NONE)
+#				set_dice(mp.x, mp.y, dice)
+#				dice = 0
+#				update_cursor()
+#				left_turn = !left_turn
+#				if is_game_over():
+#					var rslt = judge_won_lose()
+#					if rslt > 0: $NEpiLabel.text = "Left won"
+#					elif rslt < 0: $NEpiLabel.text = "Right won"
+#					else: $NEpiLabel.text = "Draw"
+#					mode = MODE_INIT
+#				else:
+#					$NEpiLabel.text = ""
 func _input(event):
 	if event is InputEventMouseButton && event.is_pressed():
 		if mode == MODE_HAI_HUMAN:
-			if get_dice(RIGHT_X, 0) != 0 && get_dice(RIGHT_X, 2) != 0 && get_dice(RIGHT_X, 4) != 0:
-				mode = MODE_INIT
-				return
-			#if left_turn:
-			#	var d = rng.randi_range(1, 6)
-			#	var x = LEFT_X if left_turn else RIGHT_X
-			#	var y = sel_move_randomly(x)
-			#	if y < 0:
-			#		clear_dice()
-			#		clear_cursor()
-			#		return
-			#	set_dice(x, y, d)
-			#	update_cursor()
-			#	left_turn = !left_turn
-			#else:
-			if !left_turn:
-				if !dice:
-					dice = rng.randi_range(1, 6)
-					set_dice(RIGHT_DICE_X, DICE_Y, dice)
-					set_dst_cursor(RIGHT_X)
-				else:
-					var mp = $Board/CurTileMap.world_to_map($Board/CurTileMap.get_local_mouse_position())
-					if $Board/CurTileMap.get_cellv(mp) == TILE_DST:
-						set_dice(RIGHT_DICE_X, DICE_Y, TILE_NONE)
-						set_dice(mp.x, mp.y, dice)
-						dice = 0
-						update_cursor()
-						left_turn = !left_turn
-			print("")
-			for i in range(3):
-				var y = i * 2
-				var left = [get_dice(LEFT_X, y), get_dice(LEFT_X, y+1)]
-				var right = [get_dice(RIGHT_X, y), get_dice(RIGHT_X, y+1)]
-				print("exp val = ", expected_value(right, left))
-		elif mode == MODE_HUM_RAND:
-			$NEpiLabel.text = ""
-			if left_turn:
-				if get_dice(RIGHT_X, 0) != 0 && get_dice(RIGHT_X, 2) != 0 && get_dice(RIGHT_X, 4) != 0:
-					#mode = MODE_INIT
-					dice = 0
-					clear_dice()
-					left_turn = true
-					return
-				if !dice:
-					dice = rng.randi_range(1, 6)
-					set_dice(LEFT_DICE_X, DICE_Y, dice)
-					set_dst_cursor(LEFT_X)
-					$NEpiLabel.text = "Click dst pos"
-				else:
-					var mp = $Board/CurTileMap.world_to_map($Board/CurTileMap.get_local_mouse_position())
-					if $Board/CurTileMap.get_cellv(mp) == TILE_DST:
-						set_dice(LEFT_DICE_X, DICE_Y, TILE_NONE)
-						set_dice(mp.x, mp.y, dice)
-						dice = 0
-						update_cursor()
-						left_turn = !left_turn
-						$NEpiLabel.text = ""
+			input_hai_human()
+		elif mode == MODE_HUM_RAND || mode == MODE_HUM_HUAI:
+			input_human_rand_or_hai()
+		#elif mode == MODE_HUAI_HUM:
+		#	input_hai_human()
 func sel_move_heuristic(slf, opo):
 	var mx = -999
 	var mi = -1
@@ -271,96 +305,148 @@ func sel_move_heuristic(slf, opo):
 		return y + 1
 	else:
 		return y
+func process_rand_rand():
+	$NEpiLabel.text = "#%d" % (nEpisode+1)
+	clear_dice()
+	while true:
+		var d = rng.randi_range(1, 6)
+		var x = LEFT_X if left_turn else RIGHT_X
+		var y = sel_move_randomly(x)
+		if y < 0:
+			update_cursor()
+			nEpisode += 1
+			nEpisodeRest -= 1
+			if nLTgtRT > nLTltRT: nLeftWon += 1
+			elif nLTgtRT < nLTltRT: nRightWon += 1
+			else: nDraw += 1
+			$StatsLabel.text = "%d-%d-%d" % [nLeftWon, nDraw, nRightWon]
+			left_turn = true		# 常に左側が先手とする
+			if nEpisodeRest == 0:
+				print("nLeftWon = ", nLeftWon)
+				print("nRightWon = ", nRightWon)
+				print("nDraw = ", nDraw)
+				mode = MODE_INIT
+			break
+		else:
+			set_dice(x, y, d)
+			left_turn = !left_turn
+func process_hai_rand():
+	clear_dice()
+	while true:
+		dice = rng.randi_range(1, 6)
+		var x = LEFT_X if left_turn else RIGHT_X
+		var y
+		if left_turn:
+			y = sel_move_heuristic(LEFT_X, RIGHT_X)
+		else:
+			y = sel_move_randomly(x)
+		if y < 0:
+			update_cursor()
+			nEpisode += 1
+			nEpisodeRest -= 1
+			if nLTgtRT > nLTltRT: nLeftWon += 1
+			elif nLTgtRT < nLTltRT: nRightWon += 1
+			else: nDraw += 1
+			left_turn = true		# 常に左側が先手とする
+			if nEpisodeRest == 0:
+				print("nLeftWon = ", nLeftWon)
+				print("nRightWon = ", nRightWon)
+				print("nDraw = ", nDraw)
+				mode = MODE_INIT
+			break
+		else:
+			set_dice(x, y, dice)
+			left_turn = !left_turn
+func process_hai_human():
+	if !left_turn: return
+	if get_dice(LEFT_X, 0) != 0 && get_dice(LEFT_X, 2) != 0 && get_dice(LEFT_X, 4) != 0:
+		mode = MODE_INIT
+		return
+	if !dice:	# ダイスが振られていない場合
+		dice = rng.randi_range(1, 6)
+		set_dice(LEFT_DICE_X, DICE_Y, dice)
+		wcnt = 30
+	else:
+		wcnt -= 1
+		if wcnt > 0: return
+		var y = sel_move_heuristic(LEFT_X, RIGHT_X)
+		if y >= 0:
+			set_dice(LEFT_X, y, dice)
+			update_cursor()
+			left_turn = !left_turn
+			dice = 0
+			set_dice(LEFT_DICE_X, DICE_Y, 0)
+			$NEpiLabel.text = "Click to Roll dice"
+func process_hum_rand_or_hai():
+	if left_turn: return
+	if !dice:	# ダイスが振られていない場合
+		dice = rng.randi_range(1, 6)
+		set_dice(RIGHT_DICE_X, DICE_Y, dice)
+		wcnt = 30
+	else:
+		wcnt -= 1
+		if wcnt > 0: return
+		var y
+		if mode == MODE_HUM_RAND:
+			y = sel_move_randomly(RIGHT_X)
+		else:
+			y = sel_move_heuristic(RIGHT_X, LEFT_X)
+		if y >= 0:
+			set_dice(RIGHT_X, y, dice)
+			update_cursor()
+			left_turn = !left_turn
+			dice = 0
+			set_dice(RIGHT_DICE_X, DICE_Y, 0)
+			
+			if is_game_over():
+				var rslt = judge_won_lose()
+				if rslt > 0: $NEpiLabel.text = "Left won"
+				elif rslt < 0: $NEpiLabel.text = "Right won"
+				else: $NEpiLabel.text = "Draw"
+				mode = MODE_INIT
+			else:
+				$NEpiLabel.text = "Click to Roll dice"
+func process_hai_hum():
+	if !left_turn: return
+	if !dice:	# ダイスが振られていない場合
+		dice = rng.randi_range(1, 6)
+		set_dice(LEFT_DICE_X, DICE_Y, dice)
+		wcnt = 30
+	else:
+		wcnt -= 1
+		if wcnt > 0: return
+		var y = sel_move_heuristic(LEFT_X, RIGHT_X)
+		#var y
+		#if mode == MODE_HUM_RAND:
+		#	y = sel_move_randomly(LEFT_X)
+		#else:
+		#	y = sel_move_heuristic(LEFT_X, RIGHT_X)
+		if y >= 0:
+			set_dice(LEFT_X, y, dice)
+			update_cursor()
+			left_turn = !left_turn
+			dice = 0
+			set_dice(LEFT_DICE_X, DICE_Y, 0)
+			
+			#if is_game_over():
+			#	var rslt = judge_won_lose()
+			#	if rslt > 0: $NEpiLabel.text = "Left won"
+			#	elif rslt < 0: $NEpiLabel.text = "Right won"
+			#	else: $NEpiLabel.text = "Draw"
+			#	mode = MODE_INIT
+			#else:
+			$NEpiLabel.text = "Click to Roll dice"
 func _process(delta):
 	if mode == MODE_RAND_RAND:
-		$NEpiLabel.text = "#%d" % (nEpisode+1)
-		clear_dice()
-		while true:
-			var d = rng.randi_range(1, 6)
-			var x = LEFT_X if left_turn else RIGHT_X
-			var y = sel_move_randomly(x)
-			if y < 0:
-				update_cursor()
-				nEpisode += 1
-				nEpisodeRest -= 1
-				if nLTgtRT > nLTltRT: nLeftWon += 1
-				elif nLTgtRT < nLTltRT: nRightWon += 1
-				else: nDraw += 1
-				left_turn = true		# 常に左側が先手とする
-				if nEpisodeRest == 0:
-					print("nLeftWon = ", nLeftWon)
-					print("nRightWon = ", nRightWon)
-					print("nDraw = ", nDraw)
-					mode = MODE_INIT
-				break
-			else:
-				set_dice(x, y, d)
-				left_turn = !left_turn
+		process_rand_rand()
 	elif mode == MODE_HAI_RAND:
-		clear_dice()
-		while true:
-			dice = rng.randi_range(1, 6)
-			var x = LEFT_X if left_turn else RIGHT_X
-			var y
-			if left_turn:
-				y = sel_move_heuristic(LEFT_X, RIGHT_X)
-			else:
-				y = sel_move_randomly(x)
-			if y < 0:
-				update_cursor()
-				nEpisode += 1
-				nEpisodeRest -= 1
-				if nLTgtRT > nLTltRT: nLeftWon += 1
-				elif nLTgtRT < nLTltRT: nRightWon += 1
-				else: nDraw += 1
-				left_turn = true		# 常に左側が先手とする
-				if nEpisodeRest == 0:
-					print("nLeftWon = ", nLeftWon)
-					print("nRightWon = ", nRightWon)
-					print("nDraw = ", nDraw)
-					mode = MODE_INIT
-				break
-			else:
-				set_dice(x, y, dice)
-				left_turn = !left_turn
+		process_hai_rand()
 	elif mode == MODE_HAI_HUMAN:
-		if !left_turn: return
-		if get_dice(LEFT_X, 0) != 0 && get_dice(LEFT_X, 2) != 0 && get_dice(LEFT_X, 4) != 0:
-			mode = MODE_INIT
-			return
-		if !dice:	# ダイスが振られていない場合
-			dice = rng.randi_range(1, 6)
-			set_dice(LEFT_DICE_X, DICE_Y, dice)
-		else:
-			var y = sel_move_heuristic(LEFT_X, RIGHT_X)
-			if y >= 0:
-				set_dice(LEFT_X, y, dice)
-				update_cursor()
-				left_turn = !left_turn
-				dice = 0
-				set_dice(LEFT_DICE_X, DICE_Y, 0)
-	elif mode == MODE_HUM_RAND:
-		if left_turn: return
-		if !dice:	# ダイスが振られていない場合
-			dice = rng.randi_range(1, 6)
-			set_dice(RIGHT_DICE_X, DICE_Y, dice)
-		else:
-			var y = sel_move_heuristic(RIGHT_X, RIGHT_X)
-			if y >= 0:
-				set_dice(RIGHT_X, y, dice)
-				update_cursor()
-				left_turn = !left_turn
-				dice = 0
-				set_dice(RIGHT_DICE_X, DICE_Y, 0)
-				
-				if is_game_over():
-					var rslt = judge_won_lose()
-					if rslt > 0: $NEpiLabel.text = "Left won"
-					elif rslt < 0: $NEpiLabel.text = "Right won"
-					else: $NEpiLabel.text = "Draw"
-					mode = MODE_INIT
-				else:
-					$NEpiLabel.text = "Click to Roll dice"
+		process_hai_human()
+	elif mode == MODE_HUM_RAND || mode == MODE_HUM_HUAI:
+		process_hum_rand_or_hai()
+	#elif mode == MODE_HUAI_HUM:
+	#	process_hai_hum()
 	pass
 
 func _on_RxRx100_Button_pressed():
@@ -395,3 +481,24 @@ func _on_HumxR_Button_pressed():
 	left_turn = true
 	$NEpiLabel.text = "Click to Roll dice"
 	pass
+
+
+func _on_HumxHuAI_Button_pressed():
+	if mode == MODE_HUM_HUAI: return
+	mode = MODE_HUM_HUAI
+	dice = 0
+	clear_dice()
+	update_cursor()
+	left_turn = true
+	$NEpiLabel.text = "Click to Roll dice"
+	pass # Replace with function body.
+
+
+func _on_HuAIxHum_Button_pressed():
+	if mode == MODE_HAI_HUMAN: return
+	mode = MODE_HAI_HUMAN
+	dice = 0
+	clear_dice()
+	update_cursor()
+	left_turn = true
+	pass # Replace with function body.

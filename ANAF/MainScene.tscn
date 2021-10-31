@@ -15,11 +15,11 @@
 [ext_resource path="res://images/rect_gray.png" type="Texture" id=13]
 [ext_resource path="res://fonts/arialbd.ttf" type="DynamicFontData" id=14]
 
-[sub_resource type="DynamicFont" id=5]
+[sub_resource type="DynamicFont" id=1]
 size = 20
 font_data = ExtResource( 14 )
 
-[sub_resource type="TileSet" id=1]
+[sub_resource type="TileSet" id=2]
 0/name = "dice_1.png 0"
 0/texture = ExtResource( 4 )
 0/tex_offset = Vector2( 0, 0 )
@@ -105,7 +105,7 @@ font_data = ExtResource( 14 )
 5/shapes = [  ]
 5/z_index = 0
 
-[sub_resource type="TileSet" id=4]
+[sub_resource type="TileSet" id=3]
 0/name = "rect_gray.png 0"
 0/texture = ExtResource( 13 )
 0/tex_offset = Vector2( 0, 0 )
@@ -135,7 +135,7 @@ font_data = ExtResource( 14 )
 1/shapes = [  ]
 1/z_index = 0
 
-[sub_resource type="DynamicFont" id=3]
+[sub_resource type="DynamicFont" id=4]
 size = 20
 font_data = ExtResource( 14 )
 
@@ -147,8 +147,20 @@ margin_left = 20.2165
 margin_top = 19.0273
 margin_right = 73.2165
 margin_bottom = 43.0273
-custom_fonts/font = SubResource( 5 )
+custom_fonts/font = SubResource( 1 )
 text = "#0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="StatsLabel" type="Label" parent="."]
+margin_left = 128.0
+margin_top = 19.0
+margin_right = 448.0
+margin_bottom = 43.0
+custom_fonts/font = SubResource( 1 )
+text = "0-0-0"
+align = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -165,11 +177,11 @@ __meta__ = {
 }
 
 [node name="DiceTileMap" type="TileMap" parent="Board"]
-tile_set = SubResource( 1 )
+tile_set = SubResource( 2 )
 format = 1
 
 [node name="CurTileMap" type="TileMap" parent="Board"]
-tile_set = SubResource( 4 )
+tile_set = SubResource( 3 )
 format = 1
 
 [node name="Sprite1" type="Sprite" parent="Board"]
@@ -189,19 +201,8 @@ margin_left = 493.521
 margin_top = 19.0273
 margin_right = 698.521
 margin_bottom = 49.0273
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 4 )
 text = "RAND vs RAND *100"
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="HumxR_Button" type="Button" parent="."]
-margin_left = 494.0
-margin_top = 76.0
-margin_right = 699.0
-margin_bottom = 106.0
-custom_fonts/font = SubResource( 3 )
-text = "Hum vs RAND"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -211,12 +212,47 @@ margin_left = 756.336
 margin_top = 19.0273
 margin_right = 972.336
 margin_bottom = 49.0273
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 4 )
 text = "RAND vs RAND *1000"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="HumxR_Button" type="Button" parent="."]
+margin_left = 494.0
+margin_top = 76.0
+margin_right = 699.0
+margin_bottom = 106.0
+custom_fonts/font = SubResource( 4 )
+text = "Hum vs RAND"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HumxHuAI_Button" type="Button" parent="."]
+margin_left = 756.336
+margin_top = 76.0
+margin_right = 961.336
+margin_bottom = 106.0
+custom_fonts/font = SubResource( 4 )
+text = "Hum vs HuAI"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HuAIxHum_Button" type="Button" parent="."]
+margin_left = 756.336
+margin_top = 128.0
+margin_right = 961.336
+margin_bottom = 158.0
+custom_fonts/font = SubResource( 4 )
+text = "HuAI vs Hum"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [connection signal="pressed" from="RxRx100_Button" to="." method="_on_RxRx100_Button_pressed"]
-[connection signal="pressed" from="HumxR_Button" to="." method="_on_HumxR_Button_pressed"]
 [connection signal="pressed" from="RxRx1000_Button" to="." method="_on_RxRx1000_Button_pressed"]
+[connection signal="pressed" from="HumxR_Button" to="." method="_on_HumxR_Button_pressed"]
+[connection signal="pressed" from="HumxHuAI_Button" to="." method="_on_HumxHuAI_Button_pressed"]
+[connection signal="pressed" from="HuAIxHum_Button" to="." method="_on_HuAIxHum_Button_pressed"]
