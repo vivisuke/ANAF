@@ -226,6 +226,7 @@ func sel_move_heuristic(slf, opo):
 		return y
 func _process(delta):
 	if mode == MODE_RAND_RAND:
+		$NEpiLabel.text = "#%d" % (nEpisode+1)
 		clear_dice()
 		while true:
 			var d = rng.randi_range(1, 6)
