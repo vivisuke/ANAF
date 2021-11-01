@@ -526,7 +526,15 @@ func _on_RxHuAIx100_Button_pressed():
 	last_mode = MODE_RAND_HAI
 	clear_dice()
 	left_turn = true
-	pass # Replace with function body.
+	pass
+func _on_RxHuAIx1000_Button_pressed():
+	nEpisodeRest = 1000
+	clear_stats()
+	mode = MODE_RAND_HAI
+	last_mode = MODE_RAND_HAI
+	clear_dice()
+	left_turn = true
+	pass
 
 func _on_HumxR_Button_pressed():		# 人間 vs ランダム
 	if mode == MODE_HUMAN_RAND: return
@@ -570,4 +578,3 @@ func _on_HuAIxHum_Button_pressed():		# ヒューリスティックAI vs 人間
 	update_cursor()
 	left_turn = true
 	pass # Replace with function body.
-
