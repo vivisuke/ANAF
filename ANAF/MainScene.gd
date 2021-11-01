@@ -17,6 +17,7 @@ enum {
 	#MODE_HUAI_HUM,		# 先手（左側）：ヒューリスティックAI、後手：人間
 	MODE_HAI_HUMAN,		# 先手（左側）：ヒューリスティックAI、後手：人間
 	MODE_RAND_RAND,
+	MODE_RAND_HAI,
 	MODE_HAI_RAND,		# 先手（左側）：ヒューリスティックAI、後手：ランダム
 }
 
@@ -341,6 +342,34 @@ func process_rand_rand():
 		else:
 			set_dice(x, y, d)
 			left_turn = !left_turn
+func process_rand_hai():
+	clear_dice()
+	while true:
+		dice = rng.randi_range(1, 6)
+		var x = LEFT_X if left_turn else RIGHT_X
+		var y
+		if left_turn:
+			y = sel_move_randomly(x)
+		else:
+			y = sel_move_heuristic(RIGHT_X, LEFT_X)
+		if y < 0:
+			update_cursor()
+			nEpisode += 1
+			nEpisodeRest -= 1
+			if nLTgtRT > nLTltRT: nLeftWon += 1
+			elif nLTgtRT < nLTltRT: nRightWon += 1
+			else: nDraw += 1
+			update_stats_label()
+			left_turn = true		# 常に左側が先手とする
+			if nEpisodeRest == 0:
+				print("nLeftWon = ", nLeftWon)
+				print("nRightWon = ", nRightWon)
+				print("nDraw = ", nDraw)
+				mode = MODE_INIT
+			break
+		else:
+			set_dice(x, y, dice)
+			left_turn = !left_turn
 func process_hai_rand():
 	clear_dice()
 	while true:
@@ -458,6 +487,8 @@ func process_hai_hum():
 func _process(delta):
 	if mode == MODE_RAND_RAND:
 		process_rand_rand()
+	elif mode == MODE_RAND_HAI:
+		process_rand_hai()
 	elif mode == MODE_HAI_RAND:
 		process_hai_rand()
 	elif mode == MODE_HAI_HUMAN:
@@ -480,8 +511,6 @@ func _on_RxRx100_Button_pressed():		# ランダム vs ランダム x 100
 	clear_dice()
 	left_turn = true
 	pass
-
-
 func _on_RxRx1000_Button_pressed():		# ランダム vs ランダム x 1000
 	nEpisodeRest = 1000
 	clear_stats()
@@ -490,6 +519,14 @@ func _on_RxRx1000_Button_pressed():		# ランダム vs ランダム x 1000
 	clear_dice()
 	left_turn = true
 	pass
+func _on_RxHuAIx100_Button_pressed():
+	nEpisodeRest = 100
+	clear_stats()
+	mode = MODE_RAND_HAI
+	last_mode = MODE_RAND_HAI
+	clear_dice()
+	left_turn = true
+	pass # Replace with function body.
 
 func _on_HumxR_Button_pressed():		# 人間 vs ランダム
 	if mode == MODE_HUMAN_RAND: return
@@ -533,3 +570,4 @@ func _on_HuAIxHum_Button_pressed():		# ヒューリスティックAI vs 人間
 	update_cursor()
 	left_turn = true
 	pass # Replace with function body.
+

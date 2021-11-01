@@ -197,9 +197,9 @@ position = Vector2( 160, 320 )
 texture = ExtResource( 11 )
 
 [node name="RxRx100_Button" type="Button" parent="."]
-margin_left = 493.521
+margin_left = 494.0
 margin_top = 19.0273
-margin_right = 698.521
+margin_right = 699.0
 margin_bottom = 49.0273
 custom_fonts/font = SubResource( 4 )
 text = "RAND vs RAND *100"
@@ -251,8 +251,20 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="RxHuAIx100_Button" type="Button" parent="."]
+margin_left = 494.0
+margin_top = 179.57
+margin_right = 699.0
+margin_bottom = 209.57
+custom_fonts/font = SubResource( 4 )
+text = "RAND vs HuAI *100"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [connection signal="pressed" from="RxRx100_Button" to="." method="_on_RxRx100_Button_pressed"]
 [connection signal="pressed" from="RxRx1000_Button" to="." method="_on_RxRx1000_Button_pressed"]
 [connection signal="pressed" from="HumxR_Button" to="." method="_on_HumxR_Button_pressed"]
 [connection signal="pressed" from="HumxHuAI_Button" to="." method="_on_HumxHuAI_Button_pressed"]
 [connection signal="pressed" from="HuAIxHum_Button" to="." method="_on_HuAIxHum_Button_pressed"]
+[connection signal="pressed" from="RxHuAIx100_Button" to="." method="_on_RxHuAIx100_Button_pressed"]
