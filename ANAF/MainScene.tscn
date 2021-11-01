@@ -166,9 +166,9 @@ __meta__ = {
 }
 
 [node name="Board" type="ColorRect" parent="."]
-margin_left = 128.0
+margin_left = 92.0
 margin_top = 128.0
-margin_right = 448.0
+margin_right = 412.0
 margin_bottom = 512.0
 color = Color( 0.941176, 0.941176, 0.941176, 1 )
 script = ExtResource( 2 )
@@ -224,7 +224,18 @@ margin_top = 76.0
 margin_right = 699.0
 margin_bottom = 106.0
 custom_fonts/font = SubResource( 4 )
-text = "Hum vs RAND"
+text = "Human vs RAND"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RxHum_Button" type="Button" parent="."]
+margin_left = 494.0
+margin_top = 128.0
+margin_right = 699.0
+margin_bottom = 158.0
+custom_fonts/font = SubResource( 4 )
+text = "RAND vs Human"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -235,7 +246,7 @@ margin_top = 76.0
 margin_right = 961.336
 margin_bottom = 106.0
 custom_fonts/font = SubResource( 4 )
-text = "Hum vs HuAI"
+text = "Human vs HuAI"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -246,7 +257,7 @@ margin_top = 128.0
 margin_right = 961.336
 margin_bottom = 158.0
 custom_fonts/font = SubResource( 4 )
-text = "HuAI vs Hum"
+text = "HuAI vs Human"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -276,6 +287,7 @@ __meta__ = {
 [connection signal="pressed" from="RxRx100_Button" to="." method="_on_RxRx100_Button_pressed"]
 [connection signal="pressed" from="RxRx1000_Button" to="." method="_on_RxRx1000_Button_pressed"]
 [connection signal="pressed" from="HumxR_Button" to="." method="_on_HumxR_Button_pressed"]
+[connection signal="pressed" from="RxHum_Button" to="." method="_on_RxHum_Button_pressed"]
 [connection signal="pressed" from="HumxHuAI_Button" to="." method="_on_HumxHuAI_Button_pressed"]
 [connection signal="pressed" from="HuAIxHum_Button" to="." method="_on_HuAIxHum_Button_pressed"]
 [connection signal="pressed" from="RxHuAIx100_Button" to="." method="_on_RxHuAIx100_Button_pressed"]

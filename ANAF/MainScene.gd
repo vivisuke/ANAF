@@ -12,7 +12,8 @@ const RIGHT_DICE_X = 5
 const DICE_Y = 0
 enum {
 	MODE_INIT = 0,
-	MODE_HUMAN_RAND,		# 先手（左側）：人間、後手：ランダム
+	MODE_HUMAN_RAND,	# 先手（左側）：人間、後手：ランダム
+	MODE_RAND_HUMAN,	# 先手（左側）：ランダム、後手：人間
 	MODE_HUMAN_HAI,		# 先手（左側）：人間、後手：ヒューリスティックAI
 	#MODE_HUAI_HUM,		# 先手（左側）：ヒューリスティックAI、後手：人間
 	MODE_HAI_HUMAN,		# 先手（左側）：ヒューリスティックAI、後手：人間
@@ -33,12 +34,17 @@ var nLTltRT = 0
 var left_turn = true		# 左側の手番
 var dice = 0
 var wcnt = 0				# ウェイト用カウンタ
+var expected_table_10 = []		# slf:[0, d1], opo:[0, 0] の場合の期待値、ix = d1 - 1
+var expected_table_11 = []		# slf:[0, d1], opo:[0, d3] の場合の期待値、ix = (d1-1)*6 + d3-1
+var expected_table_20 = []		# slf:[d0, d1], opo:[0, 0] の場合の期待値、ix = (d0-1)*6 + (d1-1)
+var expected_table_21 = []		# slf:[d0, d1], opo:[0, d3] の場合の期待値、ix = ((d0-1)*6 + (d1-1))*6 + d3-1
 var labels = []				# 大小比較結果ラベル
 var CmpLabel = load("res://CmpLabel.tscn")
 var rng = RandomNumberGenerator.new()
 
 func _ready():
 	rng.randomize()
+	build_expected_table()
 	clear_dice()
 	clear_cursor()
 	for i in range(3):
@@ -48,8 +54,89 @@ func _ready():
 		l.text = ""
 		$Board.add_child(l)
 		labels.push_back(l)
+	#
+	var slf = [0, 0]
+	var opo = [0, 0]
+	#print(expected_value2(slf, opo))
+	#for i in range(6):
+	#	slf[1] = i + 1
+	#	print(expected_value2(slf, opo), ", ", expected_value0(slf, opo))
+	#	#assert( expected_value0(slf, opo) == expected_value2(slf, opo) )
+	"""
+	for d0 in range(7):
+		slf[0] = d0
+		for d1 in range(7):
+			if d0 != 0 && d1 == 0: continue
+			slf[1] = d1
+			for d2 in range(7):
+				opo[0] = d2
+				for d3 in range(7):
+					if d2 != 0 && d3 == 0: continue
+					opo[1] = d3
+					if expected_value2(slf, opo) != expected_value0(slf, opo):
+						print(d0, d1, d2, d3, ": ", expected_value2(slf, opo), ", ", expected_value0(slf, opo))
+	"""
 	pass
+func build_expected_table():
+	expected_table_10.resize(6)
+	for d1 in range(1, 7):		# [1, 6]
+		var sum = 0.0
+		for t0 in range(1, 7):
+			for t2 in range(1, 7):
+				for t3 in range(1, 7):
+					var d0d1 = t0 * d1
+					var d2d3 = t2 * t3
+					if d0d1 < d2d3: sum -= 1.0
+					elif d0d1 > d2d3: sum += 1.0
+		expected_table_10[d1-1] = sum / (6*6*6)
+	print(expected_table_10, "\n")
 
+	expected_table_11.resize(6*6)
+	for d1 in range(1, 7):		# [1, 6]
+		for d3 in range(1, 7):		# [1, 6]
+			var sum = 0.0
+			for t0 in range(1, 7):
+				for t2 in range(1, 7):
+					var d0d1 = t0 * d1
+					var d2d3 = t2 * d3
+					if d0d1 < d2d3: sum -= 1.0
+					elif d0d1 > d2d3: sum += 1.0
+			expected_table_11[(d1-1)*6+d3-1] = sum / (6*6)
+	#print(expected_table_11)
+	for i in range(6):
+		var ix = i * 6
+		print(expected_table_11.slice(ix, ix+5))
+
+	# slf:[d0, d1], opo:[0, 0] の場合の期待値、ix = (d0-1)*6 + (d1-1)
+	expected_table_20.resize(6*6)
+	for d0 in range(1, 7):		# [1, 6]
+		for d1 in range(1, 7):		# [1, 6]
+			var sum = 0.0
+			for t2 in range(1, 7):
+				for t3 in range(1, 7):
+					var d0d1 = d0 * d1
+					var d2d3 = t2 * t3
+					if d0d1 < d2d3: sum -= 1.0
+					elif d0d1 > d2d3: sum += 1.0
+			expected_table_20[(d0-1)*6+d1-1] = sum / (6*6)
+	#print(expected_table_11)
+	print("")
+	for i in range(6):
+		var ix = i * 6
+		print(expected_table_20.slice(ix, ix+5))
+
+	# slf:[d0, d1], opo:[0, d3] の場合の期待値、ix = ((d0-1)*6 + (d1-1))*6 + d3-1
+	expected_table_21.resize(6*6*6)
+	for d0 in range(1, 7):		# [1, 6]
+		for d1 in range(1, 7):		# [1, 6]
+			for d3 in range(1, 7):		# [1, 6]
+				var sum = 0.0
+				for t2 in range(1, 7):
+					var d0d1 = d0 * d1
+					var d2d3 = t2 * d3
+					if d0d1 < d2d3: sum -= 1.0
+					elif d0d1 > d2d3: sum += 1.0
+				expected_table_21[((d0-1)*6 + (d1-1))*6+d3-1] = sum / (6)
 func clear_dice():
 	for y in range(6):
 		$Board/DiceTileMap.set_cell(LEFT_X, y, TILE_NONE)
@@ -134,6 +221,39 @@ func sel_move_randomly(x):
 	return lst[rng.randi_range(0, lst.size() - 1)]
 # opo: [0, d2], lft: [0, 0] のように、opo の方がダイス数が多いか等しいものとする
 func expected_value(slf, opo) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
+	return expected_value2(slf, opo)
+func expected_value2(slf, opo) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
+	if opo == slf: return 0.0
+	var d0 = slf[0]
+	var d1 = slf[1]
+	var d2 = opo[0]
+	var d3 = opo[1]
+	if d0 == 0:	# lt: [0, ?], rt: [?, ?]
+		if d2 == 0:	# lt: [0, ?], rt: [0, ?]
+			if d1 == 0:	# lt: [0, 0], rt: [0, d3]
+				assert( d3 != 0 )
+				return -expected_table_10[d3-1]
+			else:				# lt: [0, d1], rt: [0, ?]
+				if d3 == 0:		# lt: [0, d1], rt: [0, 0]
+					return expected_table_10[d1-1]
+				else:		# lt: [0, d1], rt: [0, d3]
+					return expected_table_11[(d1-1)*6 + d3-1]
+		else:				# lt: [0, ?], rt: [d2, ?]
+			return -expected_value2(opo, slf)
+	else:
+		if d2 == 0:		# lt: [d0, d1], rt: [0, ?]
+			assert( d1 != 0 )
+			if d3 == 0:		# lt: [d0, d1], rt: [0, 0]
+				return expected_table_20[(d0-1)*6 + (d1-1)]
+			else:			# lt: [d0, d1], rt: [0, d3]
+				return expected_table_21[((d0-1)*6 + (d1-1))*6 + d3-1]
+		else:				# lt: [d0, d1], rt: [d2, d3]
+			var d0d1 = d0 * d1
+			var d2d3 = d2 * d3
+			if d0d1 > d2d3: return 1.0
+			if d0d1 < d2d3: return -1.0
+			return 0.0
+func expected_value0(slf, opo) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
 	if opo == slf: return 0.0
 	var d0 = opo[0]
 	var d1 = opo[1]
@@ -143,7 +263,7 @@ func expected_value(slf, opo) -> float:	# サイコロ２つまでの、slf か�
 		if d2 == 0:	# lt: [0, ?], rt: [0, ?]
 			if d1 == 0:	# lt: [0, 0], rt: [0, d3]
 				assert( d3 != 0 )
-				return -expected_value(opo, slf)
+				return -expected_value0(opo, slf)
 			else:				# lt: [0, d1], rt: [0, ?]
 				if d3 == 0:		# lt: [0, d1], rt: [0, 0]
 					var sum = 0.0
@@ -165,7 +285,7 @@ func expected_value(slf, opo) -> float:	# サイコロ２つまでの、slf か�
 								elif d0d1 < d2d3: sum += 1.0
 					return sum / (6*6)
 		else:				# lt: [0, ?], rt: [d2, ?]
-			return -expected_value(opo, slf)
+			return -expected_value0(opo, slf)
 		pass
 	else:				# lt: [d0, ?], rt: [?, ?]
 		if d2 == 0:		# lt: [d0, d1], rt: [0, ?]
@@ -194,7 +314,7 @@ func expected_value(slf, opo) -> float:	# サイコロ２つまでの、slf か�
 			if d0d1 < d2d3: return 1.0
 			return 0.0
 	return 999.0
-func input_hai_human():
+func input_X_human():		# 左側：人間以外、右側：人間
 	if get_dice(RIGHT_X, 0) != 0 && get_dice(RIGHT_X, 2) != 0 && get_dice(RIGHT_X, 4) != 0:
 		mode = MODE_INIT
 		return
@@ -233,7 +353,7 @@ func input_hai_human():
 	#	var left = [get_dice(LEFT_X, y), get_dice(LEFT_X, y+1)]
 	#	var right = [get_dice(RIGHT_X, y), get_dice(RIGHT_X, y+1)]
 	#	print("exp val = ", expected_value(right, left))
-func input_human_rand_or_hai():
+func input_human_X():		# 左側（先手）：人間 vs 右側（後手）：ランダム、AI など人間以外
 	$NEpiLabel.text = ""
 	if left_turn:
 		if get_dice(RIGHT_X, 0) != 0 && get_dice(RIGHT_X, 2) != 0 && get_dice(RIGHT_X, 4) != 0:
@@ -287,12 +407,10 @@ func input_human_rand_or_hai():
 #					$NEpiLabel.text = ""
 func _input(event):
 	if event is InputEventMouseButton && event.is_pressed():
-		if mode == MODE_HAI_HUMAN:
-			input_hai_human()
+		if mode == MODE_RAND_HUMAN || mode == MODE_HAI_HUMAN:
+			input_X_human()
 		elif mode == MODE_HUMAN_RAND || mode == MODE_HUMAN_HAI:
-			input_human_rand_or_hai()
-		#elif mode == MODE_HUAI_HUM:
-		#	input_hai_human()
+			input_human_X()
 func sel_move_heuristic(slf, opo):
 	var mx = -999
 	var mi = -1
@@ -417,7 +535,27 @@ func process_hai_human():
 			dice = 0
 			set_dice(LEFT_DICE_X, DICE_Y, 0)
 			$NEpiLabel.text = "Click to Roll dice"
-func process_hum_rand_or_hai():
+func process_rand_human():
+	if !left_turn: return
+	if get_dice(LEFT_X, 0) != 0 && get_dice(LEFT_X, 2) != 0 && get_dice(LEFT_X, 4) != 0:
+		mode = MODE_INIT
+		return
+	if !dice:	# ダイスが振られていない場合
+		dice = rng.randi_range(1, 6)
+		set_dice(LEFT_DICE_X, DICE_Y, dice)
+		wcnt = 30
+	else:
+		wcnt -= 1
+		if wcnt > 0: return
+		var y = sel_move_randomly(LEFT_X)
+		if y >= 0:
+			set_dice(LEFT_X, y, dice)
+			update_cursor()
+			left_turn = !left_turn
+			dice = 0
+			set_dice(LEFT_DICE_X, DICE_Y, 0)
+			$NEpiLabel.text = "Click to Roll dice"
+func process_hum_X():		# 左側：人間 vs 右側：人間以外
 	if left_turn: return
 	if !dice:	# ダイスが振られていない場合
 		dice = rng.randi_range(1, 6)
@@ -493,8 +631,10 @@ func _process(delta):
 		process_hai_rand()
 	elif mode == MODE_HAI_HUMAN:
 		process_hai_human()
+	elif mode == MODE_RAND_HUMAN:
+		process_rand_human()
 	elif mode == MODE_HUMAN_RAND || mode == MODE_HUMAN_HAI:
-		process_hum_rand_or_hai()
+		process_hum_X()
 	#elif mode == MODE_HUAI_HUM:
 	#	process_hai_hum()
 	pass
@@ -549,8 +689,19 @@ func _on_HumxR_Button_pressed():		# 人間 vs ランダム
 	left_turn = true
 	$NEpiLabel.text = "Click to Roll dice"
 	pass
-
-
+func _on_RxHum_Button_pressed():		# ランダム vs 人間
+	if mode == MODE_RAND_HUMAN: return
+	if last_mode != MODE_RAND_HUMAN:
+		clear_stats()
+		update_stats_label()
+	mode = MODE_RAND_HUMAN
+	last_mode = MODE_RAND_HUMAN
+	dice = 0
+	clear_dice()
+	update_cursor()
+	left_turn = true
+	$NEpiLabel.text = ""
+	pass
 func _on_HumxHuAI_Button_pressed():		# 人間 vs ヒューリスティックAI
 	if mode == MODE_HUMAN_HAI: return
 	if last_mode != MODE_HUMAN_HAI:
@@ -578,3 +729,5 @@ func _on_HuAIxHum_Button_pressed():		# ヒューリスティックAI vs 人間
 	update_cursor()
 	left_turn = true
 	pass # Replace with function body.
+
+
