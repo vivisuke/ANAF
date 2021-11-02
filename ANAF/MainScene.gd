@@ -39,11 +39,13 @@ var expected_table_11 = []		# slf:[0, d1], opo:[0, d3] の場合の期待値、i
 var expected_table_20 = []		# slf:[d0, d1], opo:[0, 0] の場合の期待値、ix = (d0-1)*6 + (d1-1)
 var expected_table_21 = []		# slf:[d0, d1], opo:[0, d3] の場合の期待値、ix = ((d0-1)*6 + (d1-1))*6 + d3-1
 var labels = []				# 大小比較結果ラベル
+var Q = []					# Q値テーブル
 var CmpLabel = load("res://CmpLabel.tscn")
 var rng = RandomNumberGenerator.new()
 
 func _ready():
 	rng.randomize()
+	Q.resize(11*11*11*64)
 	build_expected_table()
 	clear_dice()
 	clear_cursor()
@@ -54,7 +56,15 @@ func _ready():
 		l.text = ""
 		$Board.add_child(l)
 		labels.push_back(l)
+	assert( quantize_exp_val(-1.0) == 0 )
+	assert( quantize_exp_val(-0.4) == 3 )
+	assert( quantize_exp_val(-0.2) == 4 )
+	assert( quantize_exp_val(0.0) == 5 )
+	assert( quantize_exp_val(0.2) == 6 )
+	assert( quantize_exp_val(0.4) == 7 )
+	assert( quantize_exp_val(1.0) == 10 )
 	#
+	"""
 	var slf = [0, 0]
 	var opo = [0, 0]
 	#print(expected_value2(slf, opo))
@@ -62,7 +72,6 @@ func _ready():
 	#	slf[1] = i + 1
 	#	print(expected_value2(slf, opo), ", ", expected_value0(slf, opo))
 	#	#assert( expected_value0(slf, opo) == expected_value2(slf, opo) )
-	"""
 	for d0 in range(7):
 		slf[0] = d0
 		for d1 in range(7):
@@ -219,9 +228,32 @@ func sel_move_randomly(x):
 	if lst.empty(): return -1
 	if lst.size() == 1: return lst[0]
 	return lst[rng.randi_range(0, lst.size() - 1)]
-# opo: [0, d2], lft: [0, 0] のように、opo の方がダイス数が多いか等しいものとする
+func get_qix(x1, x2):		# TileMap の陸海空状態からQ値辞書キーを計算
+	#var ev1 = quantize_exp_val(expected_value([get_dice(x1, 0), get_dice(x1, 1)], [get_dice(x2, 0), get_dice(x2, 1)]))
+	#var ev2 = quantize_exp_val(expected_value([get_dice(x1, 2), get_dice(x1, 3)], [get_dice(x2, 2), get_dice(x2, 3)]))
+	#var ev3 = quantize_exp_val(expected_value([get_dice(x1, 4), get_dice(x1, 5)], [get_dice(x2, 4), get_dice(x2, 5)]))
+	#var lst = []
+	var ix : int = 0
+	var e : int = 0			# 6bit数値
+	for i in range(3):
+		var y = i * 2
+		var d0 = get_dice(x1, y)
+		var d1 = get_dice(x1, y + 1)
+		var d2 = get_dice(x2, y)
+		var d3 = get_dice(x2, y + 1)
+		#lst.push_back(quantize_exp_val(expected_value([d0, d1], [d2, d3])))
+		ix = ix * 11 + quantize_exp_val(expected_value([d0, d1], [d2, d3]))
+		e <<= 1
+		if d0 == 0 || d1 == 0: e += 1
+		e <<= 1
+		if d2 == 0 || d3 == 0: e += 1
+	return ix * 64 + e		# 64 = 2^6
+func quantize_exp_val(val:float) -> int:	# [-1.0, +1.0] -> [0, 1, 2, ... 10]、[-1.0, -0.9] -> 0, 0.0 -> 5
+	#print(int(val / 0.2 + 0.5)) 
+	return int(round(val / 0.2)) + 5
 func expected_value(slf, opo) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
 	return expected_value2(slf, opo)
+# --opo: [0, d2], lft: [0, 0] のように、opo の方がダイス数が多いか等しいものとする--
 func expected_value2(slf, opo) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
 	if opo == slf: return 0.0
 	var d0 = slf[0]
