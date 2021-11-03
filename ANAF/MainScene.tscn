@@ -197,9 +197,9 @@ position = Vector2( 160, 320 )
 texture = ExtResource( 11 )
 
 [node name="RxRx100_Button" type="Button" parent="."]
-margin_left = 494.0
+margin_left = 527.298
 margin_top = 19.0273
-margin_right = 699.0
+margin_right = 732.298
 margin_bottom = 49.0273
 custom_fonts/font = SubResource( 4 )
 text = "RAND vs RAND *100"
@@ -208,9 +208,9 @@ __meta__ = {
 }
 
 [node name="RxRx1000_Button" type="Button" parent="."]
-margin_left = 756.336
+margin_left = 789.634
 margin_top = 19.0273
-margin_right = 972.336
+margin_right = 1005.63
 margin_bottom = 49.0273
 custom_fonts/font = SubResource( 4 )
 text = "RAND vs RAND *1000"
@@ -219,9 +219,9 @@ __meta__ = {
 }
 
 [node name="HumxR_Button" type="Button" parent="."]
-margin_left = 494.0
+margin_left = 527.298
 margin_top = 76.0
-margin_right = 699.0
+margin_right = 732.298
 margin_bottom = 106.0
 custom_fonts/font = SubResource( 4 )
 text = "Human vs RAND"
@@ -230,9 +230,9 @@ __meta__ = {
 }
 
 [node name="RxHum_Button" type="Button" parent="."]
-margin_left = 494.0
+margin_left = 527.298
 margin_top = 128.0
-margin_right = 699.0
+margin_right = 732.298
 margin_bottom = 158.0
 custom_fonts/font = SubResource( 4 )
 text = "RAND vs Human"
@@ -241,9 +241,9 @@ __meta__ = {
 }
 
 [node name="HumxHuAI_Button" type="Button" parent="."]
-margin_left = 756.336
+margin_left = 789.634
 margin_top = 76.0
-margin_right = 961.336
+margin_right = 994.634
 margin_bottom = 106.0
 custom_fonts/font = SubResource( 4 )
 text = "Human vs HuAI"
@@ -252,9 +252,9 @@ __meta__ = {
 }
 
 [node name="HuAIxHum_Button" type="Button" parent="."]
-margin_left = 756.336
+margin_left = 789.634
 margin_top = 128.0
-margin_right = 961.336
+margin_right = 994.634
 margin_bottom = 158.0
 custom_fonts/font = SubResource( 4 )
 text = "HuAI vs Human"
@@ -263,9 +263,9 @@ __meta__ = {
 }
 
 [node name="RxHuAIx100_Button" type="Button" parent="."]
-margin_left = 494.0
+margin_left = 527.298
 margin_top = 179.57
-margin_right = 699.0
+margin_right = 732.298
 margin_bottom = 209.57
 custom_fonts/font = SubResource( 4 )
 text = "RAND vs HuAI *100"
@@ -273,10 +273,21 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="RxQAIx100_Button" type="Button" parent="."]
+margin_left = 527.298
+margin_top = 240.0
+margin_right = 732.298
+margin_bottom = 270.0
+custom_fonts/font = SubResource( 4 )
+text = "RAND vs QAI *100"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="RxHuAIx1000_Button" type="Button" parent="."]
-margin_left = 756.336
+margin_left = 789.634
 margin_top = 179.57
-margin_right = 962.336
+margin_right = 995.634
 margin_bottom = 209.57
 custom_fonts/font = SubResource( 4 )
 text = "RAND vs HuAI *1000"
@@ -291,4 +302,5 @@ __meta__ = {
 [connection signal="pressed" from="HumxHuAI_Button" to="." method="_on_HumxHuAI_Button_pressed"]
 [connection signal="pressed" from="HuAIxHum_Button" to="." method="_on_HuAIxHum_Button_pressed"]
 [connection signal="pressed" from="RxHuAIx100_Button" to="." method="_on_RxHuAIx100_Button_pressed"]
+[connection signal="pressed" from="RxQAIx100_Button" to="." method="_on_RxQAIx100_Button_pressed"]
 [connection signal="pressed" from="RxHuAIx1000_Button" to="." method="_on_RxHuAIx1000_Button_pressed"]

@@ -20,6 +20,7 @@ enum {
 	MODE_RAND_RAND,
 	MODE_RAND_HAI,
 	MODE_HAI_RAND,		# 先手（左側）：ヒューリスティックAI、後手：ランダム
+	MODE_RAND_QAI,
 }
 
 var mode = MODE_INIT
@@ -34,10 +35,10 @@ var nLTltRT = 0
 var left_turn = true		# 左側の手番
 var dice = 0
 var wcnt = 0				# ウェイト用カウンタ
-var expected_table_10 = []		# slf:[0, d1], opo:[0, 0] の場合の期待値、ix = d1 - 1
-var expected_table_11 = []		# slf:[0, d1], opo:[0, d3] の場合の期待値、ix = (d1-1)*6 + d3-1
-var expected_table_20 = []		# slf:[d0, d1], opo:[0, 0] の場合の期待値、ix = (d0-1)*6 + (d1-1)
-var expected_table_21 = []		# slf:[d0, d1], opo:[0, d3] の場合の期待値、ix = ((d0-1)*6 + (d1-1))*6 + d3-1
+var expected_table_10 = []		# slf:[0, d1], enmy:[0, 0] の場合の期待値、ix = d1 - 1
+var expected_table_11 = []		# slf:[0, d1], enmy:[0, d3] の場合の期待値、ix = (d1-1)*6 + d3-1
+var expected_table_20 = []		# slf:[d0, d1], enmy:[0, 0] の場合の期待値、ix = (d0-1)*6 + (d1-1)
+var expected_table_21 = []		# slf:[d0, d1], enmy:[0, d3] の場合の期待値、ix = ((d0-1)*6 + (d1-1))*6 + d3-1
 var labels = []				# 大小比較結果ラベル
 var Q = []					# Q値テーブル
 var CmpLabel = load("res://CmpLabel.tscn")
@@ -45,7 +46,7 @@ var rng = RandomNumberGenerator.new()
 
 func _ready():
 	rng.randomize()
-	Q.resize(11*11*11*64)
+	Q.resize(11*11*11*64*6)
 	build_expected_table()
 	clear_dice()
 	clear_cursor()
@@ -66,24 +67,24 @@ func _ready():
 	#
 	"""
 	var slf = [0, 0]
-	var opo = [0, 0]
-	#print(expected_value2(slf, opo))
+	var enmy = [0, 0]
+	#print(expected_value2(slf, enmy))
 	#for i in range(6):
 	#	slf[1] = i + 1
-	#	print(expected_value2(slf, opo), ", ", expected_value0(slf, opo))
-	#	#assert( expected_value0(slf, opo) == expected_value2(slf, opo) )
+	#	print(expected_value2(slf, enmy), ", ", expected_value0(slf, enmy))
+	#	#assert( expected_value0(slf, enmy) == expected_value2(slf, enmy) )
 	for d0 in range(7):
 		slf[0] = d0
 		for d1 in range(7):
 			if d0 != 0 && d1 == 0: continue
 			slf[1] = d1
 			for d2 in range(7):
-				opo[0] = d2
+				enmy[0] = d2
 				for d3 in range(7):
 					if d2 != 0 && d3 == 0: continue
-					opo[1] = d3
-					if expected_value2(slf, opo) != expected_value0(slf, opo):
-						print(d0, d1, d2, d3, ": ", expected_value2(slf, opo), ", ", expected_value0(slf, opo))
+					enmy[1] = d3
+					if expected_value2(slf, enmy) != expected_value0(slf, enmy):
+						print(d0, d1, d2, d3, ": ", expected_value2(slf, enmy), ", ", expected_value0(slf, enmy))
 	"""
 	pass
 func build_expected_table():
@@ -116,7 +117,7 @@ func build_expected_table():
 		var ix = i * 6
 		print(expected_table_11.slice(ix, ix+5))
 
-	# slf:[d0, d1], opo:[0, 0] の場合の期待値、ix = (d0-1)*6 + (d1-1)
+	# slf:[d0, d1], enmy:[0, 0] の場合の期待値、ix = (d0-1)*6 + (d1-1)
 	expected_table_20.resize(6*6)
 	for d0 in range(1, 7):		# [1, 6]
 		for d1 in range(1, 7):		# [1, 6]
@@ -134,7 +135,7 @@ func build_expected_table():
 		var ix = i * 6
 		print(expected_table_20.slice(ix, ix+5))
 
-	# slf:[d0, d1], opo:[0, d3] の場合の期待値、ix = ((d0-1)*6 + (d1-1))*6 + d3-1
+	# slf:[d0, d1], enmy:[0, d3] の場合の期待値、ix = ((d0-1)*6 + (d1-1))*6 + d3-1
 	expected_table_21.resize(6*6*6)
 	for d0 in range(1, 7):		# [1, 6]
 		for d1 in range(1, 7):		# [1, 6]
@@ -228,38 +229,42 @@ func sel_move_randomly(x):
 	if lst.empty(): return -1
 	if lst.size() == 1: return lst[0]
 	return lst[rng.randi_range(0, lst.size() - 1)]
-func get_qix(x1, x2):		# TileMap の陸海空状態からQ値辞書キーを計算
-	#var ev1 = quantize_exp_val(expected_value([get_dice(x1, 0), get_dice(x1, 1)], [get_dice(x2, 0), get_dice(x2, 1)]))
-	#var ev2 = quantize_exp_val(expected_value([get_dice(x1, 2), get_dice(x1, 3)], [get_dice(x2, 2), get_dice(x2, 3)]))
-	#var ev3 = quantize_exp_val(expected_value([get_dice(x1, 4), get_dice(x1, 5)], [get_dice(x2, 4), get_dice(x2, 5)]))
+func get_qix(slf, enmy, d):		# TileMap の陸海空状態からQ値辞書キーを計算
 	#var lst = []
 	var ix : int = 0
-	var e : int = 0			# 6bit数値
+	var e : int = 0			# 6bit数値, bit が1ならダイスを置ける
 	for i in range(3):
 		var y = i * 2
-		var d0 = get_dice(x1, y)
-		var d1 = get_dice(x1, y + 1)
-		var d2 = get_dice(x2, y)
-		var d3 = get_dice(x2, y + 1)
+		var d0 = get_dice(slf, y)
+		var d1 = get_dice(slf, y + 1)
+		var d2 = get_dice(enmy, y)
+		var d3 = get_dice(enmy, y + 1)
 		#lst.push_back(quantize_exp_val(expected_value([d0, d1], [d2, d3])))
 		ix = ix * 11 + quantize_exp_val(expected_value([d0, d1], [d2, d3]))
 		e <<= 1
 		if d0 == 0 || d1 == 0: e += 1
 		e <<= 1
 		if d2 == 0 || d3 == 0: e += 1
-	return ix * 64 + e		# 64 = 2^6
+	var qix = (ix * 64 + e) * 6 + (d-1)		# 64 = 2^6
+	if Q[qix] == null:
+		var lst = [0.0, 0.0, 0.0]
+		if (e & 0x20) == 0: lst[0] = -9.9		# 着手不可の場合
+		if (e & 0x08) == 0: lst[1] = -9.9
+		if (e & 0x02) == 0: lst[2] = -9.9
+		Q[qix] = lst
+	return qix
 func quantize_exp_val(val:float) -> int:	# [-1.0, +1.0] -> [0, 1, 2, ... 10]、[-1.0, -0.9] -> 0, 0.0 -> 5
 	#print(int(val / 0.2 + 0.5)) 
 	return int(round(val / 0.2)) + 5
-func expected_value(slf, opo) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
-	return expected_value2(slf, opo)
-# --opo: [0, d2], lft: [0, 0] のように、opo の方がダイス数が多いか等しいものとする--
-func expected_value2(slf, opo) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
-	if opo == slf: return 0.0
+func expected_value(slf, enmy) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
+	return expected_value2(slf, enmy)
+# --enmy: [0, d2], lft: [0, 0] のように、enmy の方がダイス数が多いか等しいものとする--
+func expected_value2(slf, enmy) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
+	if enmy == slf: return 0.0
 	var d0 = slf[0]
 	var d1 = slf[1]
-	var d2 = opo[0]
-	var d3 = opo[1]
+	var d2 = enmy[0]
+	var d3 = enmy[1]
 	if d0 == 0:	# lt: [0, ?], rt: [?, ?]
 		if d2 == 0:	# lt: [0, ?], rt: [0, ?]
 			if d1 == 0:	# lt: [0, 0], rt: [0, d3]
@@ -271,7 +276,7 @@ func expected_value2(slf, opo) -> float:	# サイコロ２つまでの、slf か
 				else:		# lt: [0, d1], rt: [0, d3]
 					return expected_table_11[(d1-1)*6 + d3-1]
 		else:				# lt: [0, ?], rt: [d2, ?]
-			return -expected_value2(opo, slf)
+			return -expected_value2(enmy, slf)
 	else:
 		if d2 == 0:		# lt: [d0, d1], rt: [0, ?]
 			assert( d1 != 0 )
@@ -285,17 +290,17 @@ func expected_value2(slf, opo) -> float:	# サイコロ２つまでの、slf か
 			if d0d1 > d2d3: return 1.0
 			if d0d1 < d2d3: return -1.0
 			return 0.0
-func expected_value0(slf, opo) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
-	if opo == slf: return 0.0
-	var d0 = opo[0]
-	var d1 = opo[1]
+func expected_value0(slf, enmy) -> float:	# サイコロ２つまでの、slf から見た期待値 [-1, 1] を計算
+	if enmy == slf: return 0.0
+	var d0 = enmy[0]
+	var d1 = enmy[1]
 	var d2 = slf[0]
 	var d3 = slf[1]
 	if d0 == 0:	# lt: [0, ?], rt: [?, ?]
 		if d2 == 0:	# lt: [0, ?], rt: [0, ?]
 			if d1 == 0:	# lt: [0, 0], rt: [0, d3]
 				assert( d3 != 0 )
-				return -expected_value0(opo, slf)
+				return -expected_value0(enmy, slf)
 			else:				# lt: [0, d1], rt: [0, ?]
 				if d3 == 0:		# lt: [0, d1], rt: [0, 0]
 					var sum = 0.0
@@ -317,7 +322,7 @@ func expected_value0(slf, opo) -> float:	# サイコロ２つまでの、slf か
 								elif d0d1 < d2d3: sum += 1.0
 					return sum / (6*6)
 		else:				# lt: [0, ?], rt: [d2, ?]
-			return -expected_value0(opo, slf)
+			return -expected_value0(enmy, slf)
 		pass
 	else:				# lt: [d0, ?], rt: [?, ?]
 		if d2 == 0:		# lt: [d0, d1], rt: [0, ?]
@@ -443,20 +448,20 @@ func _input(event):
 			input_X_human()
 		elif mode == MODE_HUMAN_RAND || mode == MODE_HUMAN_HAI:
 			input_human_X()
-func sel_move_heuristic(slf, opo):
+func sel_move_heuristic(slf, enmy):
 	var mx = -999
 	var mi = -1
 	for i in range(3):
 		var y = i*2
 		if get_dice(slf, y) != 0: continue	# slf: [d0, d1] の場合
 		var slfa = [get_dice(slf, y), get_dice(slf, y+1)]
-		var opoa = [get_dice(opo, y), get_dice(opo, y+1)]
-		var ev0 = expected_value(slfa, opoa)
+		var enmya = [get_dice(enmy, y), get_dice(enmy, y+1)]
+		var ev0 = expected_value(slfa, enmya)
 		if get_dice(slf, y+1) == 0:		# slf: [0, 0] の場合
 			slfa[1] = dice
 		else:							# slf: [0, d1] の場合
 			slfa[0] = dice
-		var de = expected_value(slfa, opoa) - ev0
+		var de = expected_value(slfa, enmya) - ev0
 		if de > mx:
 			mx = de
 			mi = i
@@ -502,6 +507,51 @@ func process_rand_hai():
 			y = sel_move_randomly(x)
 		else:
 			y = sel_move_heuristic(RIGHT_X, LEFT_X)
+		if y < 0:
+			update_cursor()
+			nEpisode += 1
+			nEpisodeRest -= 1
+			if nLTgtRT > nLTltRT: nLeftWon += 1
+			elif nLTgtRT < nLTltRT: nRightWon += 1
+			else: nDraw += 1
+			update_stats_label()
+			left_turn = true		# 常に左側が先手とする
+			if nEpisodeRest == 0:
+				print("nLeftWon = ", nLeftWon)
+				print("nRightWon = ", nRightWon)
+				print("nDraw = ", nDraw)
+				mode = MODE_INIT
+			break
+		else:
+			set_dice(x, y, dice)
+			left_turn = !left_turn
+func sel_move_Q(slf, enmy):
+	var qix = get_qix(slf, enmy, dice)
+	var qt = Q[qix]
+	var mxq = -9.0
+	var lst = []
+	for i in range(qt.size()):
+		if qt[i] > mxq:
+			lst = [i*2]
+			mxq = qt[i]
+		elif qt[i] == mxq:
+			lst.push_back(i*2)
+	if lst.empty(): return -1
+	var y = qt[0]
+	if lst.size() != 1:
+		y = lst[rng.randi_range(0, lst.size()-1)]
+	if get_dice(slf, y+1) == 0: y += 1
+	return y
+func process_rand_qai():
+	clear_dice()
+	while true:
+		dice = rng.randi_range(1, 6)
+		var x = LEFT_X if left_turn else RIGHT_X
+		var y
+		if left_turn:
+			y = sel_move_randomly(x)
+		else:
+			y = sel_move_Q(RIGHT_X, LEFT_X)
 		if y < 0:
 			update_cursor()
 			nEpisode += 1
@@ -661,6 +711,8 @@ func _process(delta):
 		process_rand_hai()
 	elif mode == MODE_HAI_RAND:
 		process_hai_rand()
+	elif mode == MODE_RAND_QAI:
+		process_rand_qai()
 	elif mode == MODE_HAI_HUMAN:
 		process_hai_human()
 	elif mode == MODE_RAND_HUMAN:
@@ -707,6 +759,14 @@ func _on_RxHuAIx1000_Button_pressed():
 	clear_dice()
 	left_turn = true
 	pass
+func _on_RxQAIx100_Button_pressed():
+	nEpisodeRest = 100
+	clear_stats()
+	mode = MODE_RAND_QAI
+	last_mode = MODE_RAND_QAI
+	clear_dice()
+	left_turn = true
+	pass # Replace with function body.
 
 func _on_HumxR_Button_pressed():		# 人間 vs ランダム
 	if mode == MODE_HUMAN_RAND: return
@@ -761,5 +821,7 @@ func _on_HuAIxHum_Button_pressed():		# ヒューリスティックAI vs 人間
 	update_cursor()
 	left_turn = true
 	pass # Replace with function body.
+
+
 
 
